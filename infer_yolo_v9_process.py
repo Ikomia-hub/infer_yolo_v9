@@ -42,7 +42,6 @@ class InferYoloV9Param(core.CWorkflowTaskParam):
         # Send parameters values to Ikomia application
         # Create the specific dict structure (string container)
         param_map = {}
-        param_map["use_custom_model"] = str(self.use_custom_model)
         param_map["input_size"] = str(self.input_size)
         param_map['model_name'] = str(self.model_name)
         param_map["conf_thres"] = str(self.conf_thres)
@@ -70,6 +69,7 @@ class InferYoloV9(dataprocess.CObjectDetectionTask):
 
         self.model = None
         self.data_coco_label = os.path.join(os.path.dirname(os.path.abspath(__file__)), "data", 'coco.yaml')
+        self.weights = None
 
     def get_progress_steps(self):
         # Function returning the number of progress steps for this algorithm
@@ -95,24 +95,19 @@ class InferYoloV9(dataprocess.CObjectDetectionTask):
 
         if param.update or self.model is None:
             self.device = torch.device("cuda") if param.cuda and torch.cuda.is_available() else torch.device("cpu")
-            self.iou_thres = param.iou_thres
-            self.conf_thres = param.conf_thres
             print("Will run on {}".format(self.device.type))
 
             if param.model_weight_file != "":
-                param.use_custom_model = True
-
-            if param.use_custom_model:
-                pass
+                self.weights = param.model_weight_file
             else:
                 weights_folder = os.path.join(os.path.dirname(os.path.abspath(__file__)), "weights")
                 if not os.path.isdir(weights_folder):
                     os.mkdir(weights_folder)
-
-            self.weights = os.path.join(weights_folder, param.model_name + '.pt')
-            if not os.path.isfile(self.weights):
-                download_model(param.model_name, weights_folder)
-            self.model = DetectMultiBackend(self.weights, device=self.device, fp16=False, data=self.data_coco_label)
+                self.weights = os.path.join(weights_folder, param.model_name + '.pt')
+                if not os.path.isfile(self.weights):
+                    download_model(param.model_name, weights_folder)
+  
+        self.model = DetectMultiBackend(self.weights, device=self.device, fp16=False, data=self.data_coco_label)
 
         # Load image
         img = letterbox(src_image, param.input_size, stride=self.model.stride, auto=True)[0]
@@ -132,7 +127,13 @@ class InferYoloV9(dataprocess.CObjectDetectionTask):
             pred = self.model(img, augment=False, visualize=False)
 
         # Apply NMS
-        pred = non_max_suppression(pred[0][0], param.conf_thres, param.iou_thres, classes=None, max_det=1000)
+        pred = non_max_suppression(
+                        pred[0][0],
+                        param.conf_thres,
+                        param.iou_thres,
+                        classes=None,
+                        max_det=1000
+                    )
 
         # Set output results
         for i, det in enumerate(pred):
