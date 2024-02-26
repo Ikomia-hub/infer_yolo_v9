@@ -16,6 +16,5 @@ pandas>=1.1.4
 seaborn>=0.11.0
 
 # Extras --------------------------------------
-ipython  # interactive notebook
 psutil  # system utilization
 thop  # FLOPs computation
