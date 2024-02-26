@@ -24,6 +24,7 @@ class InferYoloV9Param(core.CWorkflowTaskParam):
         self.conf_thres = 0.25
         self.iou_thres = 0.5
         self.model_weight_file = ""
+        self.class_file = ""
         self.update = False
 
     def set_values(self, param_map):
@@ -36,6 +37,7 @@ class InferYoloV9Param(core.CWorkflowTaskParam):
         self.conf_thres = float(param_map["conf_thres"])
         self.iou_thres = float(param_map["iou_thres"])
         self.model_weight_file = param_map["model_weight_file"]
+        self.class_file = param_map["class_file"]
         self.update = True
 
     def get_values(self):
@@ -48,6 +50,7 @@ class InferYoloV9Param(core.CWorkflowTaskParam):
         param_map["iou_thres"] = str(self.iou_thres)
         param_map["cuda"] = str(self.cuda)
         param_map["model_weight_file"] = str(self.model_weight_file)
+        param_map["class_file"] = str(self.class_file)
 
         return param_map
 
@@ -68,7 +71,6 @@ class InferYoloV9(dataprocess.CObjectDetectionTask):
             self.set_param_object(copy.deepcopy(param))
 
         self.model = None
-        self.data_coco_label = os.path.join(os.path.dirname(os.path.abspath(__file__)), "data", 'coco.yaml')
         self.weights = None
 
     def get_progress_steps(self):
@@ -99,6 +101,7 @@ class InferYoloV9(dataprocess.CObjectDetectionTask):
 
             if param.model_weight_file != "":
                 self.weights = param.model_weight_file
+                label_data = param.class_file
             else:
                 weights_folder = os.path.join(os.path.dirname(os.path.abspath(__file__)), "weights")
                 if not os.path.isdir(weights_folder):
@@ -106,8 +109,9 @@ class InferYoloV9(dataprocess.CObjectDetectionTask):
                 self.weights = os.path.join(weights_folder, param.model_name + '.pt')
                 if not os.path.isfile(self.weights):
                     download_model(param.model_name, weights_folder)
+                label_data = os.path.join(os.path.dirname(os.path.abspath(__file__)), "data", 'coco.yaml')
 
-            self.model = DetectMultiBackend(self.weights, device=self.device, fp16=False, data=self.data_coco_label)
+            self.model = DetectMultiBackend(self.weights, device=self.device, fp16=False, data=label_data)
 
         # Load image
         img = letterbox(src_image, param.input_size, stride=self.model.stride, auto=True)[0]

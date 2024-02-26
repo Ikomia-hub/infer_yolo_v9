@@ -38,26 +38,35 @@ class InferYoloV9Widget(core.CWorkflowTaskWidget):
 
         self.combo_model.setCurrentText(self.parameters.model_name)
 
-        # Hyper-parameters
-        custom_weight = bool(self.parameters.model_weight_file)
-        self.check_cfg = QCheckBox("Custom model")
-        self.check_cfg.setChecked(custom_weight)
-        self.grid_layout.addWidget(
-            self.check_cfg, self.grid_layout.rowCount(), 0, 1, 2)
-        self.check_cfg.stateChanged.connect(self.on_custom_weight_changed)
+        # Custom model checkbox
+        custom_model = bool(self.parameters.model_weight_file or self.parameters.class_file)
+        self.check_custom_model = QCheckBox("Custom model")
+        self.check_custom_model.setChecked(custom_model)
+        self.grid_layout.addWidget(self.check_custom_model, self.grid_layout.rowCount(), 0, 1, 2)
+        self.check_custom_model.stateChanged.connect(self.on_custom_model_changed)
 
+        # Model weight section
         self.label_hyp = QLabel("Model weight (.pt)")
         self.browse_weight_file = pyqtutils.BrowseFileWidget(
                                         path=self.parameters.model_weight_file,
                                         tooltip="Select file",
-                                        mode=QFileDialog.ExistingFile
-        )
+                                        mode=QFileDialog.ExistingFile)
         row = self.grid_layout.rowCount()
         self.grid_layout.addWidget(self.label_hyp, row, 0)
         self.grid_layout.addWidget(self.browse_weight_file, row, 1)
 
-        self.label_hyp.setVisible(custom_weight)
-        self.browse_weight_file.setVisible(custom_weight)
+        # Classes file section
+        self.label_class = QLabel("Classes file (.yaml)")
+        self.browse_class_file = pyqtutils.BrowseFileWidget(
+                                        path=self.parameters.class_file,
+                                        tooltip="Select file",
+                                        mode=QFileDialog.ExistingFile)
+        row = self.grid_layout.rowCount()
+        self.grid_layout.addWidget(self.label_class, row, 0)
+        self.grid_layout.addWidget(self.browse_class_file, row, 1)
+
+        # Set initial visibility based on the custom model checkbox
+        self.on_custom_model_changed()
 
         # Input size
         self.spin_input_size = pyqtutils.append_spin(
@@ -94,10 +103,14 @@ class InferYoloV9Widget(core.CWorkflowTaskWidget):
         # Set widget layout
         self.set_layout(layout_ptr)
 
+    def on_custom_model_changed(self):
+        # Toggle visibility based on the custom model checkbox's state
+        custom_model = self.check_custom_model.isChecked()
+        self.label_hyp.setVisible(custom_model)
+        self.browse_weight_file.setVisible(custom_model)
+        self.label_class.setVisible(custom_model)
+        self.browse_class_file.setVisible(custom_model)
 
-    def on_custom_weight_changed(self, int):
-        self.label_hyp.setVisible(self.check_cfg.isChecked())
-        self.browse_weight_file.setVisible(self.check_cfg.isChecked())
 
     def on_apply(self):
         # Apply button clicked slot
@@ -106,7 +119,9 @@ class InferYoloV9Widget(core.CWorkflowTaskWidget):
         self.parameters.input_size = self.spin_input_size.value()
         self.parameters.conf_thres = self.spin_conf_thres.value()
         self.parameters.iou_thres = self.spin_iou_thres.value()
-        if self.check_cfg.isChecked():
+        self.parameters.class_file = self.browse_class_file.path
+
+        if self.check_custom_model.isChecked():
             self.parameters.model_weight_file = self.browse_weight_file.path
         self.parameters.update = True
 
