@@ -71,7 +71,10 @@ Ikomia Studio offers a friendly UI with the same features as the API.
 - **input_size** (int) - default '640': Size of the input image.
 - **iou_thres** (float) - default '0.5': Intersection over Union, degree of overlap between two boxes [0,1].
 - **cuda** (bool): If True, CUDA-based inference (GPU). If False, run on CPU.
+
+Optionally, you can load a custom model: 
 - **model_weight_file** (str, *optional*): Path to model weights file .pt. 
+- **class_file** (str, *optional*): Path to classes file .yaml . 
 
 **Parameters** should be in **strings format**  when added to the dictionary.
 
