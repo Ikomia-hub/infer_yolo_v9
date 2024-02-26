@@ -48,7 +48,7 @@ class InferYoloV9Param(core.CWorkflowTaskParam):
         param_map["iou_thres"] = str(self.iou_thres)
         param_map["cuda"] = str(self.cuda)
         param_map["model_weight_file"] = str(self.model_weight_file)
-        
+
         return param_map
 
 
@@ -106,14 +106,15 @@ class InferYoloV9(dataprocess.CObjectDetectionTask):
                 self.weights = os.path.join(weights_folder, param.model_name + '.pt')
                 if not os.path.isfile(self.weights):
                     download_model(param.model_name, weights_folder)
-  
-        self.model = DetectMultiBackend(self.weights, device=self.device, fp16=False, data=self.data_coco_label)
+
+            self.model = DetectMultiBackend(self.weights, device=self.device, fp16=False, data=self.data_coco_label)
 
         # Load image
         img = letterbox(src_image, param.input_size, stride=self.model.stride, auto=True)[0]
         img = img[:, :, ::-1].transpose(2, 0, 1)
         img = np.ascontiguousarray(img)
-        img = torch.from_numpy(img).to(self.device).float()
+        img = torch.from_numpy(img).to(self.device)
+        img = img.half() if self.device.type == 'cuda' else img.float()  # uint8 to fp16/32
         img /= 255.0
         if img.ndimension() == 3:
             img = img.unsqueeze(0)
@@ -121,6 +122,10 @@ class InferYoloV9(dataprocess.CObjectDetectionTask):
         # Set classes
         self.classes = list(self.model.names.values())
         self.set_names(self.classes)
+
+        half = self.device.type != 'cpu'  # half precision only supported on CUDA
+        if half:
+            self.model.half()  # to FP16
 
         # Inference
         with torch.no_grad():
