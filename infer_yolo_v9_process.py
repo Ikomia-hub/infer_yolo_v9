@@ -178,7 +178,7 @@ class InferYoloV9Factory(dataprocess.CTaskFactory):
         # relative path -> as displayed in Ikomia Studio algorithm tree
         self.info.path = "Plugins/Python/Detection"
         self.info.version = "1.0.0"
-        # self.info.icon_path = "your path to a specific icon"
+        self.info.icon_path = "images/icon.png"
         self.info.authors = "Wang, Chien-Yao  and Liao, Hong-Yuan Mark"
         self.info.article = "YOLOv9: Learning What You Want to Learn Using Programmable Gradient Information"
         self.info.journal = "arXiv:2402.13616"
