@@ -52,26 +52,20 @@ display(algo.get_image_with_graphics())
 ```
 
 ## :sunny: Use with Ikomia Studio
-
 Ikomia Studio offers a friendly UI with the same features as the API.
-
 - If you haven't started using Ikomia Studio yet, download and install it from [this page](https://www.ikomia.ai/studio).
-
 - For additional guidance on getting started with Ikomia Studio, check out [this blog post](https://www.ikomia.ai/blog/how-to-get-started-with-ikomia-studio).
 
 ## :pencil: Set algorithm parameters
-
 - **model_name** (str) - default 'yolov9-m': Name of the YOLOv9 pre-trained model. Other model available:
     - ~~yolov9-s~~
     - ~~yolov9-m~~
     - yolov9-c
     - yolov9-e
-
 - **conf_thres** (float) default '0.25': Box threshold for the prediction [0,1].
 - **input_size** (int) - default '640': Size of the input image.
 - **iou_thres** (float) - default '0.5': Intersection over Union, degree of overlap between two boxes [0,1].
 - **cuda** (bool): If True, CUDA-based inference (GPU). If False, run on CPU.
-
 Optionally, you can load a custom model: 
 - **model_weight_file** (str, *optional*): Path to model weights file .pt. 
 - **class_file** (str, *optional*): Path to classes file .yaml . 
