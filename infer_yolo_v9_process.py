@@ -99,6 +99,7 @@ class InferYoloV9(dataprocess.CObjectDetectionTask):
         if param.update or self.model is None:
             self.device = torch.device("cuda") if param.cuda and torch.cuda.is_available() else torch.device("cpu")
             print("Will run on {}".format(self.device.type))
+            half = self.device.type != 'cpu'
 
             if param.model_weight_file != "":
                 self.weights = param.model_weight_file
@@ -112,7 +113,11 @@ class InferYoloV9(dataprocess.CObjectDetectionTask):
                     download_model(param.model_name, weights_folder)
                 label_data = os.path.join(os.path.dirname(os.path.abspath(__file__)), "data", 'coco.yaml')
 
-            self.model = DetectMultiBackend(self.weights, device=self.device, fp16=False, data=label_data)
+            self.model = DetectMultiBackend(self.weights, device=self.device, fp16=half, data=label_data)
+            if half:
+                self.model.half()  # to FP16
+
+            param.update = False
 
         # Load image
         img = letterbox(src_image, param.input_size, stride=self.model.stride, auto=True)[0]
@@ -127,10 +132,6 @@ class InferYoloV9(dataprocess.CObjectDetectionTask):
         # Set classes
         self.classes = list(self.model.names.values())
         self.set_names(self.classes)
-
-        half = self.device.type != 'cpu'  # half precision only supported on CUDA
-        if half:
-            self.model.half()  # to FP16
 
         # Inference
         with torch.no_grad():
@@ -178,7 +179,7 @@ class InferYoloV9Factory(dataprocess.CTaskFactory):
         self.info.short_description = "Object detection with YOLOv9 models"
         # relative path -> as displayed in Ikomia Studio algorithm tree
         self.info.path = "Plugins/Python/Detection"
-        self.info.version = "1.1.0"
+        self.info.version = "1.2.0"
         self.info.icon_path = "images/icon.png"
         self.info.authors = "Wang, Chien-Yao  and Liao, Hong-Yuan Mark"
         self.info.article = "YOLOv9: Learning What You Want to Learn Using Programmable Gradient Information"
