@@ -58,8 +58,8 @@ Ikomia Studio offers a friendly UI with the same features as the API.
 
 ## :pencil: Set algorithm parameters
 - **model_name** (str) - default 'yolov9-m': Name of the YOLOv9 pre-trained model. Other model available:
-    - ~~yolov9-s~~
-    - ~~yolov9-m~~
+    - yolov9-s
+    - yolov9-m
     - yolov9-c
     - yolov9-e
 - **conf_thres** (float) default '0.25': Box threshold for the prediction [0,1].

@@ -31,8 +31,8 @@ class InferYoloV9Widget(core.CWorkflowTaskWidget):
         # Model name
         self.combo_model = pyqtutils.append_combo(
             self.grid_layout, "Model name")
-        # self.combo_model.addItem("yolov9-s")
-        # self.combo_model.addItem("yolov9-m")
+        self.combo_model.addItem("yolov9-s")
+        self.combo_model.addItem("yolov9-m")
         self.combo_model.addItem("yolov9-c")
         self.combo_model.addItem("yolov9-e")
 
