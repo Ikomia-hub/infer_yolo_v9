@@ -1,7 +1,6 @@
 # Usage: pip install -r requirements.txt
---index-url https://download.pytorch.org/whl/cu128
---extra-index-url https://pypi.org/simple
-torch>=2.6.0,<2.8.0
+--extra-index-url https://download.pytorch.org/whl/cu128
+torch>=2.6.0, <2.8.0
 
 scipy>=1.4.1
 

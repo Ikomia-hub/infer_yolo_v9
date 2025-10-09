@@ -1,12 +1,16 @@
 import copy
-from ikomia import core, dataprocess, utils
+import os
+
 import torch
 import numpy as np
+
+from ikomia import core, dataprocess, utils
+
 from infer_yolo_v9.ikutils import download_model
 from infer_yolo_v9.yolov9.models.common import DetectMultiBackend
 from infer_yolo_v9.yolov9.utils.general import non_max_suppression, scale_boxes
 from infer_yolo_v9.yolov9.utils.augmentations import letterbox
-import os
+
 
 # --------------------
 # - Class to handle the algorithm parameters
@@ -43,16 +47,16 @@ class InferYoloV9Param(core.CWorkflowTaskParam):
     def get_values(self):
         # Send parameters values to Ikomia application
         # Create the specific dict structure (string container)
-        param_map = {}
-        param_map["input_size"] = str(self.input_size)
-        param_map['model_name'] = str(self.model_name)
-        param_map["conf_thres"] = str(self.conf_thres)
-        param_map["iou_thres"] = str(self.iou_thres)
-        param_map["cuda"] = str(self.cuda)
-        param_map["model_weight_file"] = str(self.model_weight_file)
-        param_map["use_custom_model"] = str(self.use_custom_model)
-        param_map["class_file"] = str(self.class_file)
-
+        param_map = {
+            "input_size": str(self.input_size),
+            "model_name": str(self.model_name),
+            "conf_thres": str(self.conf_thres),
+            "iou_thres": str(self.iou_thres),
+            "cuda": str(self.cuda),
+            "model_weight_file": str(self.model_weight_file),
+            "use_custom_model": str(self.use_custom_model),
+            "class_file": str(self.class_file)
+        }
         return param_map
 
 
@@ -73,51 +77,58 @@ class InferYoloV9(dataprocess.CObjectDetectionTask):
 
         self.model = None
         self.weights = None
+        self.classes = None
 
     def get_progress_steps(self):
         # Function returning the number of progress steps for this algorithm
         # This is handled by the main progress bar of Ikomia Studio
         return 1
 
+    def _load_model(self):
+        param = self.get_param_object()
+        self.device = torch.device("cuda") if param.cuda and torch.cuda.is_available() else torch.device("cpu")
+        print("Will run on {}".format(self.device.type))
+        half = self.device.type != 'cpu'
+
+        if param.model_weight_file != "":
+            self.weights = param.model_weight_file
+            label_data = param.class_file
+        else:
+            weights_folder = os.path.join(os.path.dirname(os.path.abspath(__file__)), "weights")
+            if not os.path.isdir(weights_folder):
+                os.mkdir(weights_folder)
+
+            self.weights = os.path.join(weights_folder, param.model_name + '.pt')
+            if not os.path.isfile(self.weights):
+                download_model(param.model_name, weights_folder)
+
+            label_data = os.path.join(os.path.dirname(os.path.abspath(__file__)), "data", 'coco.yaml')
+
+        self.model = DetectMultiBackend(self.weights, device=self.device, fp16=half, data=label_data)
+        if half:
+            self.model.half()  # to FP16
+
+        param.update = False
+
+    def init_long_process(self):
+        self._load_model()
+        super().init_long_process()
+
     def run(self):
         # Main function of your algorithm
         # Call begin_task_run() for initialization
         self.begin_task_run()
 
-        # Call begin_task_run for initialization
-        self.begin_task_run()
-
         # Get input :
-        input = self.get_input(0)
+        img_input = self.get_input(0)
 
         # Get image from input/output (numpy array):
-        src_image = input.get_image()
+        src_image = img_input.get_image()
 
         # Get parameters :
         param = self.get_param_object()
-
-        if param.update or self.model is None:
-            self.device = torch.device("cuda") if param.cuda and torch.cuda.is_available() else torch.device("cpu")
-            print("Will run on {}".format(self.device.type))
-            half = self.device.type != 'cpu'
-
-            if param.model_weight_file != "":
-                self.weights = param.model_weight_file
-                label_data = param.class_file
-            else:
-                weights_folder = os.path.join(os.path.dirname(os.path.abspath(__file__)), "weights")
-                if not os.path.isdir(weights_folder):
-                    os.mkdir(weights_folder)
-                self.weights = os.path.join(weights_folder, param.model_name + '.pt')
-                if not os.path.isfile(self.weights):
-                    download_model(param.model_name, weights_folder)
-                label_data = os.path.join(os.path.dirname(os.path.abspath(__file__)), "data", 'coco.yaml')
-
-            self.model = DetectMultiBackend(self.weights, device=self.device, fp16=half, data=label_data)
-            if half:
-                self.model.half()  # to FP16
-
-            param.update = False
+        if param.update:
+            self._load_model()
 
         # Load image
         img = letterbox(src_image, param.input_size, stride=self.model.stride, auto=True)[0]
@@ -126,6 +137,7 @@ class InferYoloV9(dataprocess.CObjectDetectionTask):
         img = torch.from_numpy(img).to(self.device)
         img = img.half() if self.device.type == 'cuda' else img.float()  # uint8 to fp16/32
         img /= 255.0
+
         if img.ndimension() == 3:
             img = img.unsqueeze(0)
 
@@ -179,7 +191,9 @@ class InferYoloV9Factory(dataprocess.CTaskFactory):
         self.info.short_description = "Object detection with YOLOv9 models"
         # relative path -> as displayed in Ikomia Studio algorithm tree
         self.info.path = "Plugins/Python/Detection"
-        self.info.version = "1.2.1"
+        self.info.version = "1.3.0"
+        # Ikomia version
+        self.info.min_ikomia_version = "0.15.0"
         self.info.icon_path = "images/icon.png"
         self.info.authors = "Wang, Chien-Yao  and Liao, Hong-Yuan Mark"
         self.info.article = "YOLOv9: Learning What You Want to Learn Using Programmable Gradient Information"
@@ -195,6 +209,11 @@ class InferYoloV9Factory(dataprocess.CTaskFactory):
         self.info.keywords = "YOLO, object, detection, real-time, Pytorch"
         self.info.algo_type = core.AlgoType.INFER
         self.info.algo_tasks = "OBJECT_DETECTION"
+        # Min hardware config
+        self.info.hardware_config.min_cpu = 4
+        self.info.hardware_config.min_ram = 16
+        self.info.hardware_config.gpu_required = False
+        self.info.hardware_config.min_vram = 6
 
     def create(self, param=None):
         # Create algorithm object
