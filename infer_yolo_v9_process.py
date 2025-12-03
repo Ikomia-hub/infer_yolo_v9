@@ -191,7 +191,7 @@ class InferYoloV9Factory(dataprocess.CTaskFactory):
         self.info.short_description = "Object detection with YOLOv9 models"
         # relative path -> as displayed in Ikomia Studio algorithm tree
         self.info.path = "Plugins/Python/Detection"
-        self.info.version = "1.3.0"
+        self.info.version = "1.3.1"
         # Ikomia version
         self.info.min_ikomia_version = "0.15.0"
         self.info.icon_path = "images/icon.png"
