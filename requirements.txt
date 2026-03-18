@@ -13,3 +13,5 @@ seaborn>=0.11.0
 ipython
 psutil  # system utilization
 thop  # FLOPs computation
+
+setuptools>=59.6.0, <70.0
