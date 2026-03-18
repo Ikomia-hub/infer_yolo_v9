@@ -1,10 +1,12 @@
+# PyQt GUI framework
+from PyQt6.QtWidgets import *
+
+from torch.cuda import is_available
+
 from ikomia import core, dataprocess
 from ikomia.utils import pyqtutils, qtconversion
 from infer_yolo_v9.infer_yolo_v9_process import InferYoloV9Param
 
-# PyQt GUI framework
-from PyQt5.QtWidgets import *
-from torch.cuda import is_available 
 
 # --------------------
 # - Class which implements widget associated with the algorithm
@@ -50,7 +52,7 @@ class InferYoloV9Widget(core.CWorkflowTaskWidget):
         self.browse_weight_file = pyqtutils.BrowseFileWidget(
                                         path=self.parameters.model_weight_file,
                                         tooltip="Select file",
-                                        mode=QFileDialog.ExistingFile)
+                                        mode=QFileDialog.FileMode.ExistingFile)
         row = self.grid_layout.rowCount()
         self.grid_layout.addWidget(self.label_hyp, row, 0)
         self.grid_layout.addWidget(self.browse_weight_file, row, 1)
@@ -60,7 +62,7 @@ class InferYoloV9Widget(core.CWorkflowTaskWidget):
         self.browse_class_file = pyqtutils.BrowseFileWidget(
                                         path=self.parameters.class_file,
                                         tooltip="Select file",
-                                        mode=QFileDialog.ExistingFile)
+                                        mode=QFileDialog.FileMode.ExistingFile)
         row = self.grid_layout.rowCount()
         self.grid_layout.addWidget(self.label_class, row, 0)
         self.grid_layout.addWidget(self.browse_class_file, row, 1)

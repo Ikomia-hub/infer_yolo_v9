@@ -191,9 +191,9 @@ class InferYoloV9Factory(dataprocess.CTaskFactory):
         self.info.short_description = "Object detection with YOLOv9 models"
         # relative path -> as displayed in Ikomia Studio algorithm tree
         self.info.path = "Plugins/Python/Detection"
-        self.info.version = "1.3.1"
+        self.info.version = "1.4.0"
         # Ikomia version
-        self.info.min_ikomia_version = "0.15.0"
+        self.info.min_ikomia_version = "0.16.0"
         self.info.icon_path = "images/icon.png"
         self.info.authors = "Wang, Chien-Yao  and Liao, Hong-Yuan Mark"
         self.info.article = "YOLOv9: Learning What You Want to Learn Using Programmable Gradient Information"
